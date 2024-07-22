@@ -1,27 +1,39 @@
 import { products } from "./db/products.js";
 import { createProductCard } from "./createProductCard.js";
+import { findProductInCart } from "./utils/findProductInCart.js";
 
 const productContainer = document.getElementById("products");
+const filterContainer = document.querySelector(".side-bar");
 
-let cart = [];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-const findProductInCart = (cart,id) => {
-    const isProductInCart = cart && cart.length > 0 && cart.find(product => product._id === id);
-    return isProductInCart;
-}
+productContainer.addEventListener("click", (event) => {
+  const isProductInCart = findProductInCart(cart, event.target.dataset.id);
+  if (!isProductInCart) {
+    const productToAddToCart = products.filter(
+      ({ _id }) => _id === event.target.dataset.id
+    );
+    cart = [...cart, ...productToAddToCart];
+    localStorage.setItem("cart", JSON.stringify(cart));
+    const cartButton = event.target;
+    cartButton.innerHTML =
+      "Go To Cart <span class='material-icons-outlined'>shopping_cart</span>";
+  } else {
+    location.href = "cart.html";
+  }
+});
 
-productContainer.addEventListener("click",(event)=>{
-    const isProductInCart = findProductInCart(cart,event.target.dataset.id);
-    if(!isProductInCart){
-        const productToAddToCart = products.filter(({_id}) => _id === event.target.dataset.id);
-        cart = [...cart,...productToAddToCart];
-        localStorage.setItem("cart",JSON.stringify(cart));
-        const cartButton = event.target;
-        cartButton.innerHTML = "Go To Cart <span class='material-icons-outlined star'>shopping_cart</span>";
-    }
-    else{
-        location.href = "cart.html"
-    }
-})
+filterContainer.addEventListener("click", (event) => {
+  const updatedProducts = products.filter(
+    ({ rating }) => rating >= Number(event.target.dataset.rating)
+  );
+  productContainer.innerHTML = "";
+  createProductCard(
+    updatedProducts,
+    productContainer,
+    findProductInCart,
+    "products"
+  );
+});
 
-createProductCard(products,productContainer);
+createProductCard(products, productContainer, findProductInCart, "products");
